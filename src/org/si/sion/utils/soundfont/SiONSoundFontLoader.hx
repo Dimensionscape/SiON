@@ -203,7 +203,7 @@ class SiONSoundFontLoader extends EventDispatcher
             file = fileList[i];
             if (new EReg('\\.mp3$', "").match(file.name)) {
                 snd = new Sound();
-                snd.loadCompressedDataFromByteArray(file, file.length);
+                snd.loadCompressedDataFromByteArray(file.array, file.length);
             }
             else if (new EReg('\\.mml$', "").match(file.name)) {
                 mml = file.readUTF();

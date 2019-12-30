@@ -31,24 +31,123 @@ import openfl.display.BitmapData;
 typedef CallbackType = Event->Void;
 
 /** Extended ByteArray, png image serialize, IFF chunk structure, FileReference operations. */
-class ByteArrayExt extends ByteArray
+/* In the original actionscript and also in the first port to haxe,
+ * this was a subclass of ByteArray. However, a change made to haxe
+ * disallowed subclassing of ByteArray, so instead it's reimplemented
+ * here by mostly making calls to a private ByteArray.
+ */
+class ByteArrayExt
 {
     // variables
     //--------------------------------------------------
     private static var crc32 : Array<Int> = null;
-    
+    public var array:ByteArray = null;
+
     /** name of this ByteArray */
     public var name : String = null;
     
+    // Overrides from ByteArray
+    // (Despite the fact that Haxe doesn't let us inherit from ByteArray)
+    public var endian(get,set) : Endian;
+    function get_endian() return array.endian;
+    function set_endian(end) return array.endian = end;
+
+    public var position(get, set) : UInt;
+    function get_position() return array.position;
+    function set_position(x) return array.position = x;
     
-    
-    
+    public var length(get, set) : UInt;
+    function get_length() return array.length;
+    function set_length(x) return array.length = x;
+
+    public var bytesAvailable(get, null) : UInt;
+    function get_bytesAvailable() return array.bytesAvailable;
+
+    public function clear()
+    {
+        array.clear();
+    }
+
+    public inline function writeBytes(bytes:ByteArray, offset:UInt = 0, length:UInt = 0)
+    {
+        array.writeBytes(bytes, offset, length);
+    }
+
+    public inline function readByte() : Int
+    {
+        return array.readByte();
+    }
+
+    public inline function readShort() : Int
+    {
+        return array.readShort();
+    }
+
+    public inline function readUnsignedShort() : UInt
+    {
+        return array.readUnsignedShort();
+    }
+
+    public inline function readInt() : Int
+    {
+        return array.readInt();
+    }
+
+    public inline function writeInt(value : Int)
+    {
+        array.writeInt(value);
+    }
+
+    public inline function readFloat() : Float
+    {
+        return array.readFloat();
+    }
+
+    public function uncompress(?algorithm:CompressionAlgorithm = null)
+    {
+        return array.uncompress(algorithm);
+    }
+
+    public function readUTF() : String
+    {
+        return array.readUTF();
+    }
+
+    public function writeByte(value : Int)
+    {
+        array.writeByte(value);
+    }
+
+    public function readBytes(bytes : ByteArray, offset : UInt = 0, length : UInt = 0)
+    {
+        array.readBytes(bytes, offset, length);
+    }
+
+    public function readMultiByte(length : UInt, charSet : String) : String
+    {
+        return array.readMultiByte(length, charSet);
+    }
+
+    public function writeMultiByte(value : String, charSet : String)
+    {
+        array.writeMultiByte(value, charSet);
+    }
+
+    public function writeUnsignedInt(value : UInt)
+    {
+        array.writeUnsignedInt(value);
+    }
+
+    public function readUnsignedByte() : UInt
+    {
+        return array.readUnsignedByte();
+    }
     // constructor
     //--------------------------------------------------
     /** constructor */
     public function new(copyFrom : ByteArray = null)
     {
-        super();
+        array = new ByteArray();
         if (copyFrom != null) {
             this.writeBytes(copyFrom);
             this.endian = copyFrom.endian;
@@ -57,7 +156,7 @@ class ByteArrayExt extends ByteArray
         else {
             // By default, use little endian, since SWF files
             // used by SoundFont are in little endian format
-            endian = Endian.LITTLE_ENDIAN;
+            this.endian = Endian.LITTLE_ENDIAN;
         }
     }
     
@@ -165,7 +264,7 @@ class ByteArrayExt extends ByteArray
             var crcStartAt : Int = png.position;
             png.writeUnsignedInt(type);
             png.writeBytes(data);
-            png.writeUnsignedInt(calculateCRC32(png, crcStartAt, png.position - crcStartAt));
+            png.writeUnsignedInt(calculateCRC32(png.array, crcStartAt, png.array.position - crcStartAt));
         };
 
         //----- settings
@@ -181,12 +280,12 @@ class ByteArrayExt extends ByteArray
         i = 0;
         while (i < imax){
             content.writeByte(0);
-            content.writeBytes(this, i * 3, width * 3);
+            content.writeBytes(this.array, i * 3, width * 3);
             i += width;
             y++;
         }
         content.writeByte(0);
-        content.writeBytes(this, i * 3, this.length - i * 3);
+        content.writeBytes(this.array, i * 3, array.length - i * 3);
         imax = (i + width) * 3;
         for (i in this.length...imax) {
             content.writeByte(0);
@@ -239,7 +338,7 @@ class ByteArrayExt extends ByteArray
     
     
     /** read (or search) IFF chunk from current position. */
-    public function readChunk(bytes : ByteArray, offset : Int = 0, searchChunkID : String = null) : Dynamic
+    public function readChunk(bytes : ByteArrayExt, offset : Int = 0, searchChunkID : String = null) : Dynamic
     {
         var id : String;
         var len : Int;
@@ -250,10 +349,10 @@ class ByteArrayExt extends ByteArray
             if (searchChunkID == null || searchChunkID == id) {
                 if (id == "RIFF" || id == "LIST") {
                     type = this.readMultiByte(4, "us-ascii");
-                    this.readBytes(bytes, offset, len - 4);
+                    this.readBytes(bytes.array, offset, len - 4);
                 }
                 else {
-                    this.readBytes(bytes, offset, len);
+                    this.readBytes(bytes.array, offset, len);
                 }
                 if ((len & 1) != 0) this.readByte();
                 bytes.endian = this.endian;
@@ -313,7 +412,8 @@ class ByteArrayExt extends ByteArray
         };
         function _onLoadComplete(e : Event) : Void{
             bae.clear();
-            bae.writeBytes(e.target.data);
+            var eventData : ByteArray = try cast(e.target, ByteArray) catch(e:Dynamic) null;
+            if (eventData != null) bae.writeBytes(eventData);
             _removeAllEventListeners(e, null);
             bae.position = 0;
             if (onComplete != null) onComplete(bae);
@@ -457,7 +557,7 @@ class ByteArrayExt extends ByteArray
             compSize = bytes.readUnsignedInt();
             
             bae = new ByteArrayExt();
-            this.readBytes(bae, 0, compSize);
+            this.readBytes(bae.array, 0, compSize);
             if (compMethod == 8) bae.uncompress(CompressionAlgorithm.DEFLATE);
             bae.name = fileName;
             result.push(bae);

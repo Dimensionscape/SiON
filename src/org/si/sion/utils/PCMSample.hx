@@ -179,7 +179,7 @@ class PCMSample extends EventDispatcher
     
     /** wave sample data of original wave file, this property is only available after loadWaveFromByteArray() or saveWaveAsByteArray(). */  
     private function get_waveData() : ByteArray{
-        return _waveData;
+        return _waveData.array;
     }  
     
     /** sample rate of original wave file, this property is only available after loadWaveFromByteArray() or saveWaveAsByteArray(). */  
@@ -471,14 +471,14 @@ class PCMSample extends EventDispatcher
         content.endian = "littleEndian";
 #end
         content.writeChunk("fmt ", fmt);
-        content.writeChunk("data", _waveData);
+        content.writeChunk("data", _waveData.array);
 #if flash
         waveFile.endian = LITTLE_ENDIAN;
 #else
         waveFile.endian = "littleEndian";
 #end
-        waveFile.writeChunk("RIFF", content, "WAVE");
-        return waveFile;
+        waveFile.writeChunk("RIFF", content.array, "WAVE");
+        return waveFile.array;
     }
 
     // utilities
@@ -692,12 +692,12 @@ class PCMSample extends EventDispatcher
       //trace("_updateSampleFromWaveData");
       var byteRate : Int = _waveDataBitRate >> 3;
         if (_waveDataChannels == _channels && _waveDataSampleRate == _sampleRate) {
-            _w2vfunctions[byteRate - 1](_waveData, _samples);
+            _w2vfunctions[byteRate - 1](_waveData.array, _samples);
         }
         else {
             _cacheChannels = _waveDataChannels;
             _cacheSampleRate = _waveDataSampleRate;
-            _w2vfunctions[byteRate - 1](_waveData, _cache);
+            _w2vfunctions[byteRate - 1](_waveData.array, _cache);
             _convertSampleRate(_cache, _cacheChannels, _cacheSampleRate, _samples, _channels, _sampleRate, true);
             clearCache();
         }
@@ -752,7 +752,7 @@ class PCMSample extends EventDispatcher
         _waveData.position = 0;
 
         // convert
-        _v2wfunctions[byteRate - 1](output, _waveData);
+        _v2wfunctions[byteRate - 1](output, _waveData.array);
     }
 
     // convert vector tp wave

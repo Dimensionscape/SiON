@@ -65,10 +65,10 @@ class SiOPMChannelKS extends SiOPMChannelFM
         str += Std.string(_operatorCount) + "\n";
         dlr("fb ", _inputLevel - 6);
         dlr2("vol", _volumes[0], "pan", _pan - 64);
-        if (operator[0] != null) str += Std.string(operator[0]) + "\n";
-        if (operator[1] != null) str += Std.string(operator[1]) + "\n";
-        if (operator[2] != null) str += Std.string(operator[2]) + "\n";
-        if (operator[3] != null) str += Std.string(operator[3]) + "\n";
+        if (pmoperator[0] != null) str += Std.string(pmoperator[0]) + "\n";
+        if (pmoperator[1] != null) str += Std.string(pmoperator[1]) + "\n";
+        if (pmoperator[2] != null) str += Std.string(pmoperator[2]) + "\n";
+        if (pmoperator[3] != null) str += Std.string(pmoperator[3]) + "\n";
         return str;
     }
     
@@ -157,7 +157,7 @@ class SiOPMChannelKS extends SiOPMChannelFM
     /** Attack rate */
     override public function setAllAttackRate(ar : Int) : Void
     {
-        var ope : SiOPMOperator = operator[0];
+        var ope : SiOPMOperator = pmoperator[0];
         ope.ar = ar;
         ope.dr = ((ar > 48)) ? 48 : ar;
         ope.tl = ((ar > 48)) ? 0 : (48 - ar);
@@ -191,7 +191,7 @@ class SiOPMChannelKS extends SiOPMChannelFM
     
     /** fixed pitch (&#64;fx) */
     override private function set_fixedPitch(i : Int) : Int{
-        for (i in 0..._operatorCount){operator[i].fixedPitchIndex = i;
+        for (i in 0..._operatorCount){pmoperator[i].fixedPitchIndex = i;
         }
         return i;
     }
@@ -337,7 +337,7 @@ class SiOPMChannelKS extends SiOPMChannelFM
         var t : Int;
         var indexMax : Float;
         var tmax : Int = SiOPMTable.PITCH_TABLE_SIZE - 1;
-        t = _ks_pitchIndex + operator[0]._pitchIndexShift + _pm_out;
+        t = _ks_pitchIndex + pmoperator[0]._pitchIndexShift + _pm_out;
         if (t < 0) t = 0
         else if (t > tmax) t = tmax;
         indexMax = _table.pitchWaveLength[t];
@@ -350,7 +350,7 @@ class SiOPMChannelKS extends SiOPMChannelFM
                 t = _lfo_waveTable[_lfo_phase];
                 //_am_out = (t * _am_depth) >> 7 << 3;
                 _pm_out = (((t << 1) - 255) * _pm_depth) >> 8;
-                t = _ks_pitchIndex + operator[0]._pitchIndexShift + _pm_out;
+                t = _ks_pitchIndex + pmoperator[0]._pitchIndexShift + _pm_out;
                 if (t < 0)                     t = 0
                 else if (t > tmax)                     t = tmax;
                 indexMax = _table.pitchWaveLength[t];

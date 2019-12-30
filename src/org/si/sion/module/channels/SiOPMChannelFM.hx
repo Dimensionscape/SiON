@@ -52,13 +52,14 @@ class SiOPMChannelFM extends SiOPMChannelBase
 
 
 
-    // valiables
+    // variables
     //--------------------------------------------------
-    /** eg_out threshold to check idling */private static var idlingThreshold : Int = 5120;  // = 256(resolution)*10(2^10=1024)*2(p/n) = volume<1/1024  
+    /** eg_out threshold to check idling */
+    private static var idlingThreshold : Int = 5120;  // = 256(resolution)*10(2^10=1024)*2(p/n) = volume<1/1024  
     
     // Operators
-    /** operators */public var operator : Array<SiOPMOperator>;
-    /** active operator */public var activeOperator : SiOPMOperator;
+    /** operators */public var pmoperator : Array<SiOPMOperator>;
+    /** active pmoperator */public var activeOperator : SiOPMOperator;
     
     // Parameters
     /** count */private var _operatorCount : Int;
@@ -104,10 +105,10 @@ class SiOPMChannelFM extends SiOPMChannelBase
         str += Std.string(_operatorCount) + "\n";
         dlr("fb ", _inputLevel - 6);
         dlr2("vol", _volumes[0], "pan", _pan - 64);
-        if (operator[0] != null) str += Std.string(operator[0]) + "\n";
-        if (operator[1] != null) str += Std.string(operator[1]) + "\n";
-        if (operator[2] != null) str += Std.string(operator[2]) + "\n";
-        if (operator[3] != null) str += Std.string(operator[3]) + "\n";
+        if (pmoperator[0] != null) str += Std.string(pmoperator[0]) + "\n";
+        if (pmoperator[1] != null) str += Std.string(pmoperator[1]) + "\n";
+        if (pmoperator[2] != null) str += Std.string(pmoperator[2]) + "\n";
+        if (pmoperator[3] != null) str += Std.string(pmoperator[3]) + "\n";
         return str;
     }
 
@@ -120,12 +121,12 @@ class SiOPMChannelFM extends SiOPMChannelBase
 
         _funcProcessList = [[_proc1op_loff, _proc2op, _proc3op, _proc4op, _proc2ana, _procring, _procsync, _proc2op, _procpcm_loff],
                 [_proc1op_lon, _proc2op, _proc3op, _proc4op, _proc2ana, _procring, _procsync, _proc2op, _procpcm_lon]];
-        operator = new Array<SiOPMOperator>();
-        operator[0] = _allocFMOperator();
-        operator[1] = null;
-        operator[2] = null;
-        operator[3] = null;
-        activeOperator = operator[0];
+        pmoperator = new Array<SiOPMOperator>();
+        pmoperator[0] = _allocFMOperator();
+        pmoperator[1] = null;
+        pmoperator[2] = null;
+        pmoperator[3] = null;
+        activeOperator = pmoperator[0];
         
         _operatorCount = 1;
         _funcProcessType = PROC_OP1;
@@ -166,10 +167,10 @@ class SiOPMChannelFM extends SiOPMChannelBase
         _pm_depth = 0;
         _am_out = 0;
         _pm_out = 0;
-        if (operator[0] != null) operator[0].detune2 = 0;
-        if (operator[1] != null) operator[1].detune2 = 0;
-        if (operator[2] != null) operator[2].detune2 = 0;
-        if (operator[3] != null) operator[3].detune2 = 0;
+        if (pmoperator[0] != null) pmoperator[0].detune2 = 0;
+        if (pmoperator[1] != null) pmoperator[1].detune2 = 0;
+        if (pmoperator[2] != null) pmoperator[2].detune2 = 0;
+        if (pmoperator[3] != null) pmoperator[3].detune2 = 0;
     }
     
     
@@ -193,10 +194,10 @@ class SiOPMChannelFM extends SiOPMChannelBase
         _pm_out = (((_lfo_waveTable[_lfo_phase] << 1) - 255) * _pm_depth) >> 8;
         _lfoSwitch(_pm_depth != 0 || _am_depth > 0);
         if (_pm_depth == 0) {
-            if (operator[0] != null) operator[0].detune2 = 0;
-            if (operator[1] != null) operator[1].detune2 = 0;
-            if (operator[2] != null) operator[2].detune2 = 0;
-            if (operator[3] != null) operator[3].detune2 = 0;
+            if (pmoperator[0] != null) pmoperator[0].detune2 = 0;
+            if (pmoperator[1] != null) pmoperator[1].detune2 = 0;
+            if (pmoperator[2] != null) pmoperator[2].detune2 = 0;
+            if (pmoperator[3] != null) pmoperator[3].detune2 = 0;
         }
     }
     
@@ -248,7 +249,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
         filterType = param.filterType;
         setSVFilter(param.cutoff, param.resonance, param.far, param.fdr1, param.fdr2, param.frr, param.fdc1, param.fdc2, param.fsc, param.frc);
         for (i in 0..._operatorCount){
-            operator[i].setSiOPMOperatorParam(param.operatorParam[i]);
+            pmoperator[i].setSiOPMOperatorParam(param.operatorParam[i]);
         }
     }
     
@@ -269,7 +270,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
         param.fb = 0;
         param.fbc = 0;
         for (i in 0..._operatorCount){
-            if (_inPipe == operator[i]._feedPipe) {
+            if (_inPipe == pmoperator[i]._feedPipe) {
                 param.fb = _inputLevel - 6;
                 param.fbc = i;
                 break;
@@ -280,7 +281,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
         param.amd = _am_depth;
         param.pmd = _pm_depth;
         for (i in 0..._operatorCount){
-            operator[i].getSiOPMOperatorParam(param.operatorParam[i]);
+            pmoperator[i].getSiOPMOperatorParam(param.operatorParam[i]);
         }
     }
     
@@ -340,10 +341,10 @@ class SiOPMChannelFM extends SiOPMChannelBase
         if (Std.is(waveData, SiOPMWaveTable)) {
             var waveTable : SiOPMWaveTable = try cast(waveData, SiOPMWaveTable) catch(e:Dynamic) null;
             if (waveTable.wavelet != null) {
-                operator[0].setWaveTable(waveTable);
-                if (operator[1] != null) operator[1].setWaveTable(waveTable);
-                if (operator[2] != null) operator[2].setWaveTable(waveTable);
-                if (operator[3] != null) operator[3].setWaveTable(waveTable);
+                pmoperator[0].setWaveTable(waveTable);
+                if (pmoperator[1] != null) pmoperator[1].setWaveTable(waveTable);
+                if (pmoperator[2] != null) pmoperator[2].setWaveTable(waveTable);
+                if (pmoperator[3] != null) pmoperator[3].setWaveTable(waveTable);
             }
         }
     }
@@ -394,9 +395,9 @@ class SiOPMChannelFM extends SiOPMChannelBase
             {
                 case 15:  // NOIZE:7 FREQ:4-0 for channel#7  
                 if (channel == 7 && _operatorCount == 4 && (data & 128) != 0) {
-                    operator[3].pgType = SiOPMTable.PG_NOISE_PULSE;
-                    operator[3].ptType = SiOPMTable.PT_OPM_NOISE;
-                    operator[3].pitchIndex = ((data & 31) << 6) + 2048;
+                    pmoperator[3].pgType = SiOPMTable.PG_NOISE_PULSE;
+                    pmoperator[3].ptType = SiOPMTable.PT_OPM_NOISE;
+                    pmoperator[3].pitchIndex = ((data & 31) << 6) + 2048;
                 }
                 case 24:  // LFO FREQ:7-0 for all 8 channels  
                     v = _table.lfo_timerSteps[data];
@@ -425,11 +426,11 @@ class SiOPMChannelFM extends SiOPMChannelBase
                             _pan = ((v == 1)) ? 128 : ((v == 2)) ? 0 : 64;
                         case 1:  // KC:6-0  
                         for (i in 0...4) {
-                            operator[i].kc = data & 127;
+                            pmoperator[i].kc = data & 127;
                         }
                         case 2:  // KF:6-0  
                         for (i in 0...4) {
-                            operator[i].kf = data & 127;
+                            pmoperator[i].kf = data & 127;
                         }
                         case 3:  // PMS:6-4 AMS:10  
                             pms = (data >> 4) & 7;
@@ -440,7 +441,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
                 }
                 else {
                     // Operator parameter
-                    op = operator[[0, 2, 1, 3][(addr >> 3) & 3]];  // [3,1,2,0]  
+                    op = pmoperator[[0, 2, 1, 3][(addr >> 3) & 3]];  // [3,1,2,0]  
                     var _sw1_ = ((addr - 0x40) >> 5);                    
 
                     switch (_sw1_)
@@ -475,7 +476,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
     //--------------------------------------------------
     /** Set algorism (&#64;al) 
      *  @param cnt Operator count.
-     *  @param alg Algolism number of the operator's connection.
+     *  @param alg Algolism number of the pmoperator's connection.
      */
     override public function setAlgorism(cnt : Int, alg : Int) : Void
     {
@@ -499,7 +500,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
         if (fb > 0) {
             // connect feedback pipe
             if (fbc < 0 || fbc >= _operatorCount)                 fbc = 0;
-            _inPipe = operator[fbc]._feedPipe;
+            _inPipe = pmoperator[fbc]._feedPipe;
             _inPipe.i = 0;
             _inputLevel = fb + 6;
             _inputMode = INPUT_FEEDBACK;
@@ -544,7 +545,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var i : Int;
         var ope : SiOPMOperator;
         for (i in 0..._operatorCount){
-            ope = operator[i];
+            ope = pmoperator[i];
             if (ope._final)                 ope.ar = ar;
         }
     }
@@ -556,7 +557,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var i : Int;
         var ope : SiOPMOperator;
         for (i in 0..._operatorCount){
-            ope = operator[i];
+            ope = pmoperator[i];
             if (ope._final)                 ope.rr = rr;
         }
     }
@@ -566,19 +567,19 @@ class SiOPMChannelFM extends SiOPMChannelBase
     //--------------------------------------------------
     /** pitch = (note &lt;&lt; 6) | (kf &amp; 63) [0,8191] */
     override private function get_pitch() : Int{
-        return operator[_operatorCount - 1].pitchIndex;
+        return pmoperator[_operatorCount - 1].pitchIndex;
     }
     override private function set_pitch(p : Int) : Int{
         for (i in 0..._operatorCount){
-            operator[i].pitchIndex = p;
+            pmoperator[i].pitchIndex = p;
         }
         return p;
     }
     
-    /** active operator index (i) */
+    /** active pmoperator index (i) */
     override private function set_activeOperatorIndex(i : Int) : Int{
         var opeIndex : Int = ((i < 0)) ? 0 : ((i >= _operatorCount)) ? (_operatorCount - 1) : i;
-        activeOperator = operator[opeIndex];
+        activeOperator = pmoperator[opeIndex];
         return i;
     }
     
@@ -626,7 +627,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
     
     /** envelop reset (&#64;er) */
     override private function set_erst(b : Bool) : Bool{
-        for (i in 0..._operatorCount){operator[i].erst = b;
+        for (i in 0..._operatorCount){pmoperator[i].erst = b;
         }
         return b;
     }
@@ -645,7 +646,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var x : Int = expression << 1;
         tl = _expressionTable[x] + _veocityTable[velocity];
         for (i in 0..._operatorCount) {
-            ope = operator[i];
+            ope = pmoperator[i];
             if (ope._final)                 ope._tlOffset(tl)
             else ope._tlOffset(0);
         }
@@ -661,7 +662,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
     {
         // initialize operators
         _updateOperatorCount(1);
-        operator[0].initialize();
+        pmoperator[0].initialize();
         _isNoteOn = false;
         registerMapType = 0;
         registerMapChannel = 0;
@@ -676,7 +677,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
     {
         // reset all operators
         for (i in 0..._operatorCount){
-            operator[i].reset();
+            pmoperator[i].reset();
         }
         _isNoteOn = false;
         _isIdling = true;
@@ -686,9 +687,9 @@ class SiOPMChannelFM extends SiOPMChannelBase
     /** Note on. */
     override public function noteOn() : Void
     {
-        // operator note on
+        // pmoperator note on
         for (i in 0..._operatorCount){
-            operator[i].noteOn();
+            pmoperator[i].noteOn();
         }
         _isNoteOn = true;
         _isIdling = false;
@@ -699,9 +700,9 @@ class SiOPMChannelFM extends SiOPMChannelBase
     /** Note off. */
     override public function noteOff() : Void
     {
-        // operator note off
+        // pmoperator note off
         for (i in 0..._operatorCount){
-            operator[i].noteOff();
+            pmoperator[i].noteOff();
         }
         _isNoteOn = false;
         super.noteOff();
@@ -718,7 +719,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var ope : SiOPMOperator;
         _isIdling = true;
         for (i in 0..._operatorCount){
-            ope = operator[i];
+            ope = pmoperator[i];
             if (ope._final && (ope._eg_out < idlingThreshold || ope._eg_state == SiOPMOperator.EG_ATTACK)) {
                 _isIdling = false;
                 break;
@@ -732,7 +733,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
     //====================================================================================================
     // Internal uses
     //====================================================================================================
-    // processing operator x1
+    // processing pmoperator x1
     //--------------------------------------------------
     // without lfo_update()
     private function _proc1op_loff(len : Int) : Void
@@ -741,7 +742,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var l : Int;
         var i : Int;
         var n : Float;
-        var ope : SiOPMOperator = operator[0];
+        var ope : SiOPMOperator = pmoperator[0];
         var log : Array<Int> = _table.logTable;
         var phase_filter : Int = SiOPMTable.PHASE_FILTER;
         
@@ -804,7 +805,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var l : Int;
         var i : Int;
         var n : Float;
-        var ope : SiOPMOperator = operator[0];
+        var ope : SiOPMOperator = pmoperator[0];
         var log : Array<Int> = _table.logTable;
         var phase_filter : Int = SiOPMTable.PHASE_FILTER;
         
@@ -878,7 +879,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
     
     
     
-    // processing operator x2
+    // processing pmoperator x2
     //--------------------------------------------------
     // This inline expansion makes execution faster.
     private function _proc2op(len : Int) : Void
@@ -889,8 +890,8 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var n : Float;
         var phase_filter : Int = SiOPMTable.PHASE_FILTER;
         var log : Array<Int> = _table.logTable;
-        var ope0 : SiOPMOperator = operator[0];
-        var ope1 : SiOPMOperator = operator[1];
+        var ope0 : SiOPMOperator = pmoperator[0];
+        var ope1 : SiOPMOperator = pmoperator[1];
         
         // buffering
         var ip : SLLint = _inPipe;
@@ -912,7 +913,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
                 ope0.detune2 = _pm_out;
                 ope1.detune2 = _pm_out;
                 _lfo_timer += _lfo_timer_initial;
-            }  // eg_update();    //----------------------------------------    // operator[0]  
+            }  // eg_update();    //----------------------------------------    // pmoperator[0]  
             
             
             
@@ -946,7 +947,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
             ope0._feedPipe.i = t;
             ope0._outPipe.i = t + ope0._basePipe.i;
             
-            // operator[1]
+            // pmoperator[1]
             //----------------------------------------
             // eg_update();
             ope1._eg_timer -= ope1._eg_timer_step;
@@ -993,7 +994,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
     
     
     
-    // processing operator x3
+    // processing pmoperator x3
     //--------------------------------------------------
     // This inline expansion makes execution faster.
     private function _proc3op(len : Int) : Void
@@ -1004,9 +1005,9 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var n : Float;
         var phase_filter : Int = SiOPMTable.PHASE_FILTER;
         var log : Array<Int> = _table.logTable;
-        var ope0 : SiOPMOperator = operator[0];
-        var ope1 : SiOPMOperator = operator[1];
-        var ope2 : SiOPMOperator = operator[2];
+        var ope0 : SiOPMOperator = pmoperator[0];
+        var ope1 : SiOPMOperator = pmoperator[1];
+        var ope2 : SiOPMOperator = pmoperator[2];
         
         // buffering
         var ip : SLLint = _inPipe;
@@ -1030,7 +1031,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
                 ope1.detune2 = _pm_out;
                 ope2.detune2 = _pm_out;
                 _lfo_timer += _lfo_timer_initial;
-            }  // eg_update();    //----------------------------------------    // operator[0]  
+            }  // eg_update();    //----------------------------------------    // pmoperator[0]  
             
             
             
@@ -1064,7 +1065,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
             ope0._feedPipe.i = t;
             ope0._outPipe.i = t + ope0._basePipe.i;
             
-            // operator[1]
+            // pmoperator[1]
             //----------------------------------------
             // eg_update();
             ope1._eg_timer -= ope1._eg_timer_step;
@@ -1093,7 +1094,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
             ope1._feedPipe.i = t;
             ope1._outPipe.i = t + ope1._basePipe.i;
             
-            // operator[2]
+            // pmoperator[2]
             //----------------------------------------
             // eg_update();
             ope2._eg_timer -= ope2._eg_timer_step;
@@ -1140,7 +1141,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
     
     
     
-    // processing operator x4
+    // processing pmoperator x4
     //--------------------------------------------------
     // This inline expansion makes execution faster.
     private function _proc4op(len : Int) : Void
@@ -1151,10 +1152,10 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var n : Float;
         var phase_filter : Int = SiOPMTable.PHASE_FILTER;
         var log : Array<Int> = _table.logTable;
-        var ope0 : SiOPMOperator = operator[0];
-        var ope1 : SiOPMOperator = operator[1];
-        var ope2 : SiOPMOperator = operator[2];
-        var ope3 : SiOPMOperator = operator[3];
+        var ope0 : SiOPMOperator = pmoperator[0];
+        var ope1 : SiOPMOperator = pmoperator[1];
+        var ope2 : SiOPMOperator = pmoperator[2];
+        var ope3 : SiOPMOperator = pmoperator[3];
         
         // buffering
         var ip : SLLint = _inPipe;
@@ -1179,7 +1180,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
                 ope2.detune2 = _pm_out;
                 ope3.detune2 = _pm_out;
                 _lfo_timer += _lfo_timer_initial;
-            }  // eg_update();    //----------------------------------------    // operator[0]  
+            }  // eg_update();    //----------------------------------------    // pmoperator[0]  
             
             
             
@@ -1213,7 +1214,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
             ope0._feedPipe.i = t;
             ope0._outPipe.i = t + ope0._basePipe.i;
             
-            // operator[1]
+            // pmoperator[1]
             //----------------------------------------
             // eg_update();
             ope1._eg_timer -= ope1._eg_timer_step;
@@ -1242,7 +1243,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
             ope1._feedPipe.i = t;
             ope1._outPipe.i = t + ope1._basePipe.i;
             
-            // operator[2]
+            // pmoperator[2]
             //----------------------------------------
             // eg_update();
             ope2._eg_timer -= ope2._eg_timer_step;
@@ -1271,7 +1272,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
             ope2._feedPipe.i = t;
             ope2._outPipe.i = t + ope2._basePipe.i;
             
-            // operator[3]
+            // pmoperator[3]
             //----------------------------------------
             // eg_update();
             ope3._eg_timer -= ope3._eg_timer_step;
@@ -1326,7 +1327,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var l : Int;
         var i : Int;
         var n : Float;
-        var ope : SiOPMOperator = operator[0];
+        var ope : SiOPMOperator = pmoperator[0];
         var log : Array<Int> = _table.logTable;
         var phase_filter : Int = SiOPMTable.PHASE_FILTER;
 
@@ -1406,7 +1407,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var l : Int;
         var i : Int;
         var n : Float;
-        var ope : SiOPMOperator = operator[0];
+        var ope : SiOPMOperator = pmoperator[0];
         var log : Array<Int> = _table.logTable;
         var phase_filter : Int = SiOPMTable.PHASE_FILTER;
         
@@ -1509,8 +1510,8 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var n : Float;
         var phase_filter : Int = SiOPMTable.PHASE_FILTER;
         var log : Array<Int> = _table.logTable;
-        var ope0 : SiOPMOperator = operator[0];
-        var ope1 : SiOPMOperator = operator[1];
+        var ope0 : SiOPMOperator = pmoperator[0];
+        var ope1 : SiOPMOperator = pmoperator[1];
         
         // buffering
         var ip : SLLint = _inPipe;
@@ -1551,7 +1552,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
                 ope1._eg_out = (ope0._eg_levelTable[ope0._eg_level] + ope1._eg_total_level) << 3;
                 ope0._eg_counter = (ope0._eg_counter + 1) & 7;
                 ope0._eg_timer += _eg_timer_initial;
-            }  //----------------------------------------    // operator[0]  
+            }  //----------------------------------------    // pmoperator[0]  
             
             
             
@@ -1563,7 +1564,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
             l += ope0._eg_out + (_am_out >> ope0._ams);
             out0 = log[l];
             
-            // operator[1] with op0s envelop and ams
+            // pmoperator[1] with op0s envelop and ams
             //----------------------------------------
             ope1._phase += ope1._phase_step;
             t = (ope1._phase & phase_filter) >> ope1._waveFixedBits;
@@ -1596,8 +1597,8 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var n : Float;
         var phase_filter : Int = SiOPMTable.PHASE_FILTER;
         var log : Array<Int> = _table.logTable;
-        var ope0 : SiOPMOperator = operator[0];
-        var ope1 : SiOPMOperator = operator[1];
+        var ope0 : SiOPMOperator = pmoperator[0];
+        var ope1 : SiOPMOperator = pmoperator[1];
         
         // buffering
         var ip : SLLint = _inPipe;
@@ -1638,7 +1639,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
                 ope1._eg_out = (ope0._eg_levelTable[ope0._eg_level] + ope1._eg_total_level) << 3;
                 ope0._eg_counter = (ope0._eg_counter + 1) & 7;
                 ope0._eg_timer += _eg_timer_initial;
-            }  //----------------------------------------    // operator[0]  
+            }  //----------------------------------------    // pmoperator[0]  
             
             
             
@@ -1648,7 +1649,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
             t = ((ope0._phase + (ip.i << _inputLevel)) & phase_filter) >> ope0._waveFixedBits;
             l = ope0._waveTable[t];
             
-            // operator[1] with op0s envelop and ams
+            // pmoperator[1] with op0s envelop and ams
             //----------------------------------------
             ope1._phase += ope1._phase_step;
             t = (ope1._phase & phase_filter) >> ope1._waveFixedBits;
@@ -1683,8 +1684,8 @@ class SiOPMChannelFM extends SiOPMChannelBase
         var phase_filter : Int = SiOPMTable.PHASE_FILTER;
         var log : Array<Int> = _table.logTable;
         var phase_overflow : Int = SiOPMTable.PHASE_MAX;
-        var ope0 : SiOPMOperator = operator[0];
-        var ope1 : SiOPMOperator = operator[1];
+        var ope0 : SiOPMOperator = pmoperator[0];
+        var ope1 : SiOPMOperator = pmoperator[1];
         
         // buffering
         var ip : SLLint = _inPipe;
@@ -1725,7 +1726,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
                 ope1._eg_out = (ope0._eg_levelTable[ope0._eg_level] + ope1._eg_total_level) << 3;
                 ope0._eg_counter = (ope0._eg_counter + 1) & 7;
                 ope0._eg_timer += _eg_timer_initial;
-            }  //----------------------------------------    // operator[0]  
+            }  //----------------------------------------    // pmoperator[0]  
             
             
             
@@ -1735,7 +1736,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
             if (ope0._phase & phase_overflow != 0)                 ope1._phase = ope1._keyon_phase;
             ope0._phase = ope0._phase & phase_filter;
             
-            // operator[1] with op0s envelop and ams
+            // pmoperator[1] with op0s envelop and ams
             //----------------------------------------
             ope1._phase += ope1._phase_step;
             t = (ope1._phase & phase_filter) >> ope1._waveFixedBits;
@@ -1773,34 +1774,34 @@ class SiOPMChannelFM extends SiOPMChannelBase
             _lfo_phase = (_lfo_phase + 1) & 255;
             _am_out = (_lfo_waveTable[_lfo_phase] * _am_depth) >> 7 << 3;
             _pm_out = (((_lfo_waveTable[_lfo_phase] << 1) - 255) * _pm_depth) >> 8;
-            if (operator[0] != null)                 operator[0].detune2 = _pm_out;
-            if (operator[1] != null)                 operator[1].detune2 = _pm_out;
-            if (operator[2] != null)                 operator[2].detune2 = _pm_out;
-            if (operator[3] != null)                 operator[3].detune2 = _pm_out;
+            if (pmoperator[0] != null)                 pmoperator[0].detune2 = _pm_out;
+            if (pmoperator[1] != null)                 pmoperator[1].detune2 = _pm_out;
+            if (pmoperator[2] != null)                 pmoperator[2].detune2 = _pm_out;
+            if (pmoperator[3] != null)                 pmoperator[3].detune2 = _pm_out;
             _lfo_timer += _lfo_timer_initial;
         }
     }
     
     
-    // update operator count.
+    // update pmoperator count.
     private function _updateOperatorCount(cnt : Int) : Void
     {
         var i : Int;
         
-        // change operator instances
+        // change pmoperator instances
         if (_operatorCount < cnt) {
             // allocate and initialize new operators
             for (i in 0...cnt) {
-                operator[i] = _allocFMOperator();
-                operator[i].initialize();
+                pmoperator[i] = _allocFMOperator();
+                pmoperator[i].initialize();
             }
         }
         else 
         if (_operatorCount > cnt) {
             // free old operators
             for (i in 0..._operatorCount) {
-                _freeFMOperator(operator[i]);
-                operator[i] = null;
+                _freeFMOperator(pmoperator[i]);
+                pmoperator[i] = null;
             }
         }
 
@@ -1810,8 +1811,8 @@ class SiOPMChannelFM extends SiOPMChannelBase
         // select processing function
         _funcProcess = _funcProcessList[_lfo_on][_funcProcessType];
         
-        // default active operator is the last one.
-        activeOperator = operator[_operatorCount - 1];
+        // default active pmoperator is the last one.
+        activeOperator = pmoperator[_operatorCount - 1];
         
         // reset feed back
         if (_inputMode == INPUT_FEEDBACK) {
@@ -1820,16 +1821,16 @@ class SiOPMChannelFM extends SiOPMChannelBase
     }
     
     
-    // alg operator=1
+    // alg pmoperator=1
     private function _algorism1(alg : Int) : Void
     {
         _updateOperatorCount(1);
         _algorism = alg;
-        operator[0]._setPipes(_pipe0, null, true);
+        pmoperator[0]._setPipes(_pipe0, null, true);
     }
     
     
-    // alg operator=2
+    // alg pmoperator=2
     private function _algorism2(alg : Int) : Void
     {
         _updateOperatorCount(2);
@@ -1838,26 +1839,26 @@ class SiOPMChannelFM extends SiOPMChannelBase
         {
             case 0:  // OPL3/MA3:con=0, OPX:con=0, 1(fbc=1)  
                 // o1(o0)
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe0, _pipe0, true);
             case 1:  // OPL3/MA3:con=1, OPX:con=2  
                 // o0+o1
-                operator[0]._setPipes(_pipe0, null, true);
-                operator[1]._setPipes(_pipe0, null, true);
+                pmoperator[0]._setPipes(_pipe0, null, true);
+                pmoperator[1]._setPipes(_pipe0, null, true);
             case 2:  // OPX:con=3  
                 // o0+o1(o0)
-                operator[0]._setPipes(_pipe0, null, true);
-                operator[1]._setPipes(_pipe0, _pipe0, true);
-                operator[1]._basePipe = _pipe0;
+                pmoperator[0]._setPipes(_pipe0, null, true);
+                pmoperator[1]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[1]._basePipe = _pipe0;
             default:
                 // o0+o1
-                operator[0]._setPipes(_pipe0, null, true);
-                operator[1]._setPipes(_pipe0, null, true);
+                pmoperator[0]._setPipes(_pipe0, null, true);
+                pmoperator[1]._setPipes(_pipe0, null, true);
         }
     }
     
     
-    // alg operator=3
+    // alg pmoperator=3
     private function _algorism3(alg : Int) : Void
     {
         _updateOperatorCount(3);
@@ -1866,50 +1867,50 @@ class SiOPMChannelFM extends SiOPMChannelBase
         {
             case 0:  // OPX:con=0, 1(fbc=1)  
                 // o2(o1(o0))
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe0, _pipe0);
-                operator[2]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe0, _pipe0);
+                pmoperator[2]._setPipes(_pipe0, _pipe0, true);
             case 1:  // OPX:con=2  
                 // o2(o0+o1)
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe0);
-                operator[2]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe0);
+                pmoperator[2]._setPipes(_pipe0, _pipe0, true);
             case 2:  // OPX:con=3  
                 // o0+o2(o1)
-                operator[0]._setPipes(_pipe0, null, true);
-                operator[1]._setPipes(_pipe1);
-                operator[2]._setPipes(_pipe0, _pipe1, true);
+                pmoperator[0]._setPipes(_pipe0, null, true);
+                pmoperator[1]._setPipes(_pipe1);
+                pmoperator[2]._setPipes(_pipe0, _pipe1, true);
             case 3:  // OPX:con=4, 5(fbc=1)  
                 // o1(o0)+o2
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe0, _pipe0, true);
-                operator[2]._setPipes(_pipe0, null, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[2]._setPipes(_pipe0, null, true);
             case 4:
                 // o1(o0)+o2(o0)
-                operator[0]._setPipes(_pipe1);
-                operator[1]._setPipes(_pipe0, _pipe1, true);
-                operator[2]._setPipes(_pipe0, _pipe1, true);
+                pmoperator[0]._setPipes(_pipe1);
+                pmoperator[1]._setPipes(_pipe0, _pipe1, true);
+                pmoperator[2]._setPipes(_pipe0, _pipe1, true);
             case 5:  // OPX:con=6  
                 // o0+o1+o2
-                operator[0]._setPipes(_pipe0, null, true);
-                operator[1]._setPipes(_pipe0, null, true);
-                operator[2]._setPipes(_pipe0, null, true);
+                pmoperator[0]._setPipes(_pipe0, null, true);
+                pmoperator[1]._setPipes(_pipe0, null, true);
+                pmoperator[2]._setPipes(_pipe0, null, true);
             case 6:  // OPX:con=7  
                 // o0+o1(o0)+o2
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe0, _pipe0, true);
-                operator[1]._basePipe = _pipe0;
-                operator[2]._setPipes(_pipe0, null, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[1]._basePipe = _pipe0;
+                pmoperator[2]._setPipes(_pipe0, null, true);
             default:
                 // o0+o1+o2
-                operator[0]._setPipes(_pipe0, null, true);
-                operator[1]._setPipes(_pipe0, null, true);
-                operator[2]._setPipes(_pipe0, null, true);
+                pmoperator[0]._setPipes(_pipe0, null, true);
+                pmoperator[1]._setPipes(_pipe0, null, true);
+                pmoperator[2]._setPipes(_pipe0, null, true);
         }
     }
     
     
-    // alg operator=4
+    // alg pmoperator=4
     private function _algorism4(alg : Int) : Void
     {
         _updateOperatorCount(4);
@@ -1918,89 +1919,89 @@ class SiOPMChannelFM extends SiOPMChannelBase
         {
             case 0:  // OPL3:con=0, MA3:con=4, OPX:con=0, 1(fbc=1)  
                 // o3(o2(o1(o0)))
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe0, _pipe0);
-                operator[2]._setPipes(_pipe0, _pipe0);
-                operator[3]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe0, _pipe0);
+                pmoperator[2]._setPipes(_pipe0, _pipe0);
+                pmoperator[3]._setPipes(_pipe0, _pipe0, true);
             case 1:  // OPX:con=2  
                 // o3(o2(o0+o1))
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe0);
-                operator[2]._setPipes(_pipe0, _pipe0);
-                operator[3]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe0);
+                pmoperator[2]._setPipes(_pipe0, _pipe0);
+                pmoperator[3]._setPipes(_pipe0, _pipe0, true);
             case 2:  // MA3:con=3, OPX:con=3  
                 // o3(o0+o2(o1))
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe1);
-                operator[2]._setPipes(_pipe0, _pipe1);
-                operator[3]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe1);
+                pmoperator[2]._setPipes(_pipe0, _pipe1);
+                pmoperator[3]._setPipes(_pipe0, _pipe0, true);
             case 3:  // OPX:con=4, 5(fbc=1)  
                 // o3(o1(o0)+o2)
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe0, _pipe0);
-                operator[2]._setPipes(_pipe0);
-                operator[3]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe0, _pipe0);
+                pmoperator[2]._setPipes(_pipe0);
+                pmoperator[3]._setPipes(_pipe0, _pipe0, true);
             case 4:  // OPL3:con=1, MA3:con=5, OPX:con=6, 7(fbc=1)  
                 // o1(o0)+o3(o2)
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe0, _pipe0, true);
-                operator[2]._setPipes(_pipe1);
-                operator[3]._setPipes(_pipe0, _pipe1, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[2]._setPipes(_pipe1);
+                pmoperator[3]._setPipes(_pipe0, _pipe1, true);
             case 5:  // OPX:con=12  
                 // o1(o0)+o2(o0)+o3(o0)
-                operator[0]._setPipes(_pipe1);
-                operator[1]._setPipes(_pipe0, _pipe1, true);
-                operator[2]._setPipes(_pipe0, _pipe1, true);
-                operator[3]._setPipes(_pipe0, _pipe1, true);
+                pmoperator[0]._setPipes(_pipe1);
+                pmoperator[1]._setPipes(_pipe0, _pipe1, true);
+                pmoperator[2]._setPipes(_pipe0, _pipe1, true);
+                pmoperator[3]._setPipes(_pipe0, _pipe1, true);
             case 6:  // OPX:con=10, 11(fbc=1)  
                 // o1(o0)+o2+o3
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe0, _pipe0, true);
-                operator[2]._setPipes(_pipe0, null, true);
-                operator[3]._setPipes(_pipe0, null, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[2]._setPipes(_pipe0, null, true);
+                pmoperator[3]._setPipes(_pipe0, null, true);
             case 7:  // MA3:con=2, OPX:con=15  
                 // o0+o1+o2+o3
-                operator[0]._setPipes(_pipe0, null, true);
-                operator[1]._setPipes(_pipe0, null, true);
-                operator[2]._setPipes(_pipe0, null, true);
-                operator[3]._setPipes(_pipe0, null, true);
+                pmoperator[0]._setPipes(_pipe0, null, true);
+                pmoperator[1]._setPipes(_pipe0, null, true);
+                pmoperator[2]._setPipes(_pipe0, null, true);
+                pmoperator[3]._setPipes(_pipe0, null, true);
             case 8:  // OPL3:con=2, MA3:con=6, OPX:con=8  
                 // o0+o3(o2(o1))
-                operator[0]._setPipes(_pipe0, null, true);
-                operator[1]._setPipes(_pipe1);
-                operator[2]._setPipes(_pipe1, _pipe1);
-                operator[3]._setPipes(_pipe0, _pipe1, true);
+                pmoperator[0]._setPipes(_pipe0, null, true);
+                pmoperator[1]._setPipes(_pipe1);
+                pmoperator[2]._setPipes(_pipe1, _pipe1);
+                pmoperator[3]._setPipes(_pipe0, _pipe1, true);
             case 9:  // OPL3:con=3, MA3:con=7, OPX:con=13  
                 // o0+o2(o1)+o3
-                operator[0]._setPipes(_pipe0, null, true);
-                operator[1]._setPipes(_pipe1);
-                operator[2]._setPipes(_pipe0, _pipe1, true);
-                operator[3]._setPipes(_pipe0, null, true);
+                pmoperator[0]._setPipes(_pipe0, null, true);
+                pmoperator[1]._setPipes(_pipe1);
+                pmoperator[2]._setPipes(_pipe0, _pipe1, true);
+                pmoperator[3]._setPipes(_pipe0, null, true);
             case 10:  // for DX7 emulation  
                 // o3(o0+o1+o2)
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe0);
-                operator[2]._setPipes(_pipe0);
-                operator[3]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe0);
+                pmoperator[2]._setPipes(_pipe0);
+                pmoperator[3]._setPipes(_pipe0, _pipe0, true);
             case 11:  // OPX:con=9  
                 // o0+o3(o1+o2)
-                operator[0]._setPipes(_pipe0, null, true);
-                operator[1]._setPipes(_pipe1);
-                operator[2]._setPipes(_pipe1);
-                operator[3]._setPipes(_pipe0, _pipe1, true);
+                pmoperator[0]._setPipes(_pipe0, null, true);
+                pmoperator[1]._setPipes(_pipe1);
+                pmoperator[2]._setPipes(_pipe1);
+                pmoperator[3]._setPipes(_pipe0, _pipe1, true);
             case 12:  // OPX:con=14  
                 // o0+o1(o0)+o3(o2)
-                operator[0]._setPipes(_pipe0);
-                operator[1]._setPipes(_pipe0, _pipe0, true);
-                operator[1]._basePipe = _pipe0;
-                operator[2]._setPipes(_pipe1);
-                operator[3]._setPipes(_pipe0, _pipe1, true);
+                pmoperator[0]._setPipes(_pipe0);
+                pmoperator[1]._setPipes(_pipe0, _pipe0, true);
+                pmoperator[1]._basePipe = _pipe0;
+                pmoperator[2]._setPipes(_pipe1);
+                pmoperator[3]._setPipes(_pipe0, _pipe1, true);
             default:
                 // o0+o1+o2+o3
-                operator[0]._setPipes(_pipe0, null, true);
-                operator[1]._setPipes(_pipe0, null, true);
-                operator[2]._setPipes(_pipe0, null, true);
-                operator[3]._setPipes(_pipe0, null, true);
+                pmoperator[0]._setPipes(_pipe0, null, true);
+                pmoperator[1]._setPipes(_pipe0, null, true);
+                pmoperator[2]._setPipes(_pipe0, null, true);
+                pmoperator[3]._setPipes(_pipe0, null, true);
         }
     }
     
@@ -2009,8 +2010,8 @@ class SiOPMChannelFM extends SiOPMChannelBase
     private function _analog(alg : Int) : Void
     {
         _updateOperatorCount(2);
-        operator[0]._setPipes(_pipe0, null, true);
-        operator[1]._setPipes(_pipe0, null, true);
+        pmoperator[0]._setPipes(_pipe0, null, true);
+        pmoperator[1]._setPipes(_pipe0, null, true);
         
         _algorism = ((alg >= 0 && alg <= 3)) ? alg : 0;
         _funcProcessType = PROC_ANA + _algorism;
@@ -2024,7 +2025,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
     private static var _freeOperators : Array<SiOPMOperator> = new Array<SiOPMOperator>();
     
     
-    /** @private [internal] Alloc operator instance WITHOUT initializing. Call from SiOPMChannelFM. */
+    /** @private [internal] Alloc pmoperator instance WITHOUT initializing. Call from SiOPMChannelFM. */
     private function _allocFMOperator() : SiOPMOperator {
         var returnOp = _freeOperators.pop();
         if (returnOp == null) {
@@ -2034,7 +2035,7 @@ class SiOPMChannelFM extends SiOPMChannelBase
     }
     
     
-    /** @private [internal] Free operator instance. Call from SiOPMChannelFM. */
+    /** @private [internal] Free pmoperator instance. Call from SiOPMChannelFM. */
     private function _freeFMOperator(osc : SiOPMOperator) : Void {
         _freeOperators.push(osc);
     }

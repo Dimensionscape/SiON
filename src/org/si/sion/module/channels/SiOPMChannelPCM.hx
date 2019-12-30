@@ -21,7 +21,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
     /** eg_out threshold to check idling */private static var idlingThreshold : Int = 5120;  // = 256(resolution)*10(2^10=1024)*2(p/n) = volume<1/1024  
     
     // Operators
-    /** operator for layer0 */public var operator : SiOPMOperator;
+    /** pmoperator for layer0 */public var pmoperator : SiOPMOperator;
     
     // Parameters
     /** pcm table */private var _pcmTable : SiOPMWavePCMTable;
@@ -66,7 +66,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
         function dlr2(p : String, i : Dynamic, q : String, j : Dynamic) : Void{str += "  " + p + "=" + Std.string(i) + " / " + q + "=" + Std.string(j) + "\n";
         };
         dlr2("vol", _volumes[0], "pan", _pan - 64);
-        str += Std.string(operator) + "\n";
+        str += Std.string(pmoperator) + "\n";
         return str;
     }
     
@@ -80,7 +80,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
     {
         super(chip);
         
-        operator = new SiOPMOperator(chip);
+        pmoperator = new SiOPMOperator(chip);
         _filterVriables2 = new Array<Float>();
         
         initialize(null, 0);
@@ -118,7 +118,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
         _am_out = 0;
         _pm_out = 0;
         _pcmTable = null;
-        operator.detune2 = 0;
+        pmoperator.detune2 = 0;
     }
     
     
@@ -142,7 +142,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
         _pm_out = (((_lfo_waveTable[_lfo_phase] << 1) - 255) * _pm_depth) >> 8;
         _lfoSwitch(_pm_depth != 0 || _am_depth > 0);
         if (_pm_depth == 0) {
-            operator.detune2 = 0;
+            pmoperator.detune2 = 0;
         }
     }
     
@@ -191,7 +191,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
         }
         filterType = param.filterType;
         setSVFilter(param.cutoff, param.resonance, param.far, param.fdr1, param.fdr2, param.frr, param.fdc1, param.fdc2, param.fsc, param.frc);
-        operator.setSiOPMOperatorParam(param.operatorParam[0]);
+        pmoperator.setSiOPMOperatorParam(param.operatorParam[0]);
     }
     
     
@@ -215,7 +215,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
         param.lfoFreqStep = _lfo_timer_step_;
         param.amd = _am_depth;
         param.pmd = _pm_depth;
-        operator.getSiOPMOperatorParam(param.operatorParam[0]);
+        pmoperator.getSiOPMOperatorParam(param.operatorParam[0]);
     }
     
     
@@ -237,7 +237,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
      */
     public function setSiOPMParameters(ar : Int, dr : Int, sr : Int, rr : Int, sl : Int, tl : Int, ksr : Int, ksl : Int, mul : Int, dt1 : Int, detune : Int, ams : Int, phase : Int, fixNote : Int) : Void
     {
-        var ope : SiOPMOperator = operator;
+        var ope : SiOPMOperator = pmoperator;
         if (ar      != INT_MIN_VALUE) ope.ar = ar;
         if (dr      != INT_MIN_VALUE) ope.dr = dr;
         if (sr      != INT_MIN_VALUE) ope.sr = sr;
@@ -270,7 +270,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
             pcm = try cast(waveData, SiOPMWavePCMData) catch(e:Dynamic) null;
         }
         if (pcm != null)             _samplePitchShift = pcm.samplingPitch - 4416;
-        operator.setPCMData(pcm);
+        pmoperator.setPCMData(pcm);
     }
     
     
@@ -294,7 +294,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
     //--------------------------------------------------
     /** Set algorism (&#64;al) 
      *  @param cnt Operator count.
-     *  @param alg Algolism number of the operator's connection.
+     *  @param alg Algolism number of the pmoperator's connection.
      */
     override public function setAlgorism(cnt : Int, alg : Int) : Void
     {
@@ -330,7 +330,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
         }
         else {
             _samplePitchShift = 0;
-            operator.setPCMData(null);
+            pmoperator.setPCMData(null);
         }
     }
     
@@ -338,14 +338,14 @@ class SiOPMChannelPCM extends SiOPMChannelBase
     /** Attack rate */
     override public function setAllAttackRate(ar : Int) : Void
     {
-        operator.ar = ar;
+        pmoperator.ar = ar;
     }
     
     
     /** Release rate (s) */
     override public function setAllReleaseRate(rr : Int) : Void
     {
-        operator.rr = rr;
+        pmoperator.rr = rr;
     }
     
     
@@ -355,7 +355,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
     //--------------------------------------------------
     /** pitch = (note &lt;&lt; 6) | (kf &amp; 63) [0,8191] */
     override private function get_pitch() : Int{
-        return operator.pitchIndex + _samplePitchShift;
+        return pmoperator.pitchIndex + _samplePitchShift;
     }
     override private function set_pitch(p : Int) : Int{
         if (_pcmTable != null) {
@@ -366,55 +366,55 @@ class SiOPMChannelPCM extends SiOPMChannelBase
                 _sampleVolume = _pcmTable._volumeTable[note];
                 _samplePan = _pcmTable._panTable[note];
             }
-            operator.setPCMData(pcm);
+            pmoperator.setPCMData(pcm);
         }
-        operator.pitchIndex = p - _samplePitchShift;
+        pmoperator.pitchIndex = p - _samplePitchShift;
         return p;
     }
     
-    /** active operator index (i) */
+    /** active pmoperator index (i) */
     override private function set_activeOperatorIndex(i : Int) : Int{
         
         return i;
     }
     
     /** release rate (&#64;rr) */
-    override private function set_rr(i : Int) : Int{operator.rr = i;
+    override private function set_rr(i : Int) : Int{pmoperator.rr = i;
         return i;
     }
     
     /** total level (&#64;tl) */
-    override private function set_tl(i : Int) : Int{operator.tl = i;
+    override private function set_tl(i : Int) : Int{pmoperator.tl = i;
         return i;
     }
     
     /** fine multiple (&#64;ml) */
-    override private function set_fmul(i : Int) : Int{operator.fmul = i;
+    override private function set_fmul(i : Int) : Int{pmoperator.fmul = i;
         return i;
     }
     
     /** phase  (&#64;ph) */
-    override private function set_phase(i : Int) : Int{operator.keyOnPhase = i;
+    override private function set_phase(i : Int) : Int{pmoperator.keyOnPhase = i;
         return i;
     }
     
     /** detune (&#64;dt) */
-    override private function set_detune(i : Int) : Int{operator.detune = i;
+    override private function set_detune(i : Int) : Int{pmoperator.detune = i;
         return i;
     }
     
     /** fixed pitch (&#64;fx) */
-    override private function set_fixedPitch(i : Int) : Int{operator.fixedPitchIndex = i;
+    override private function set_fixedPitch(i : Int) : Int{pmoperator.fixedPitchIndex = i;
         return i;
     }
     
     /** ssgec (&#64;se) */
-    override private function set_ssgec(i : Int) : Int{operator.ssgec = i;
+    override private function set_ssgec(i : Int) : Int{pmoperator.ssgec = i;
         return i;
     }
     
     /** envelop reset (&#64;er) */
-    override private function set_erst(b : Bool) : Bool{operator.erst = b;
+    override private function set_erst(b : Bool) : Bool{pmoperator.erst = b;
         return b;
     }
     
@@ -431,7 +431,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
         var tl : Int;
         var x : Int = expression << 1;
         tl = _expressionTable[x] + _veocityTable[velocity];
-        operator._tlOffset(tl);
+        pmoperator._tlOffset(tl);
     }
     
     
@@ -443,7 +443,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
     override public function initialize(prev : SiOPMChannelBase, bufferIndex : Int) : Void
     {
         // initialize operators
-        operator.initialize();
+        pmoperator.initialize();
         _isNoteOn = false;
        registerMapType = 0;
        registerMapChannel = 0;
@@ -462,7 +462,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
     override public function reset() : Void
     {
         // reset all operators
-        operator.reset();
+        pmoperator.reset();
         _isNoteOn = false;
         _isIdling = true;
     }
@@ -471,8 +471,8 @@ class SiOPMChannelPCM extends SiOPMChannelBase
     /** Note on. */
     override public function noteOn() : Void
     {
-        // operator note on
-        operator.noteOn();
+        // pmoperator note on
+        pmoperator.noteOn();
         _isNoteOn = true;
         _isIdling = false;
         super.noteOn();
@@ -482,8 +482,8 @@ class SiOPMChannelPCM extends SiOPMChannelBase
     /** Note off. */
     override public function noteOff() : Void
     {
-        // operator note off
-        operator.noteOff();
+        // pmoperator note off
+        pmoperator.noteOff();
         _isNoteOn = false;
         super.noteOff();
     }
@@ -495,7 +495,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
         _bufferIndex = 0;
         
         // check idling flag
-        _isIdling = operator._eg_out > idlingThreshold && operator._eg_state != SiOPMOperator.EG_ATTACK;
+        _isIdling = pmoperator._eg_out > idlingThreshold && pmoperator._eg_state != SiOPMOperator.EG_ATTACK;
     }
     
     
@@ -506,7 +506,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
             _nop(len);
         }
         else {
-            _proc(len, operator, false, true);
+            _proc(len, pmoperator, false, true);
         }
         _bufferIndex += len;
     }
@@ -527,7 +527,7 @@ class SiOPMChannelPCM extends SiOPMChannelBase
     //====================================================================================================
     // Internal uses
     //====================================================================================================
-    // process 1 operator
+    // process 1 pmoperator
     //--------------------------------------------------
     private function _proc(len : Int, ope : SiOPMOperator, mix : Bool, finalOutput : Bool) : Void
     {

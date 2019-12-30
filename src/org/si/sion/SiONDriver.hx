@@ -1551,13 +1551,18 @@ class SiONDriver extends Sprite implements ISiOPMWaveInterface
     // handler for Sound COMPLETE/IO_ERROR Event
     private function _onSoundEvent(e : Event) : Void
     {
-        if (Std.is(e.target, Sound)) {
-            e.target.removeEventListener(Event.COMPLETE, _onSoundEvent);
-            e.target.removeEventListener(IOErrorEvent.IO_ERROR, _onSoundEvent);
+        var sound : Sound = try cast(e.target, Sound) catch(e:Dynamic) null;
+        var soundLoader : SoundLoader = try cast(e.target, SoundLoader) catch(e:Dynamic) null;
+        if (sound != null) {
+            sound.removeEventListener(Event.COMPLETE, _onSoundEvent);
+            sound.removeEventListener(IOErrorEvent.IO_ERROR, _onSoundEvent);
         }
-        else {  // e.target is SoundLoader  
-            e.target.removeEventListener(Event.COMPLETE, _onSoundEvent);
-            e.target.removeEventListener(ErrorEvent.ERROR, _onSoundEvent);
+        else if (soundLoader != null) {  
+            soundLoader.removeEventListener(Event.COMPLETE, _onSoundEvent);
+            soundLoader.removeEventListener(ErrorEvent.ERROR, _onSoundEvent);
+        }
+        else {
+            trace('Invalid type to SiONDriver._onSoundEvent');
         }
         var i : Int = Lambda.indexOf(_loadingSoundList, e.target);
         if (i != -1)             _loadingSoundList.splice(i, 1);

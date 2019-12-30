@@ -153,7 +153,9 @@ class Translator
                             }
                             case "_":{mml += volDw + res[3];
                             }
-                            case "q":{mml += "q" + Std.string((Std.parseInt(res[3]) + 1) >> 1);
+                            case "q":{
+                                var parsedInt : Int = Std.parseInt(res[3]);
+                                mml += "q" + Std.string((parsedInt + 1) >> 1);
                             }
                             case "@m":{mml += "@mask" + Std.string(Std.parseInt(res[3]));
                             }

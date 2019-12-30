@@ -10,6 +10,9 @@ import org.si.sion.events.*;
 import org.si.sion.utils.SiONPresetVoice;
 import openfl.display.*;
 import openfl.geom.*;
+import lime.ui.Gamepad;
+import lime.ui.GamepadAxis;
+import lime.ui.GamepadButton;
 
 class Tenorion extends Sprite
 {
@@ -86,6 +89,14 @@ class Tenorion extends Sprite
         }
         beatCounter++;
     }
+
+    public function onGamepadAxisMove (axis:GamepadAxis, value:Float):Void {
+        matrixPad.onGamepadAxisMove(axis,value);
+	}
+
+	public function onGamepadButtonDown(button:GamepadButton) {
+        matrixPad.onGamepadButtonDown(button);
+    }
 }
 
 
@@ -124,10 +135,6 @@ class MatrixPad extends Bitmap
         stage.addEventListener(Event.REMOVED_FROM_STAGE, _onRemoved);
         addEventListener("enterFrame", _onEnterFrame);
         stage.addEventListener("click", _onClick);
-#if (!flash)
-        stage.addEventListener(JoystickEvent.AXIS_MOVE, onJoyAxisMove);
-        stage.addEventListener(JoystickEvent.BUTTON_DOWN, onJoyButtonDown);
-#end
     }
 
     private var bJustMoved : Bool = false;
@@ -176,36 +183,40 @@ class MatrixPad extends Bitmap
         joyTrack--;
     }
 
-    private function onJoyAxisMove (event:JoystickEvent):Void {
-        if (Math.abs(event.x) < Main.DEAD_ZONE && Math.abs(event.y) < Main.DEAD_ZONE) {
+    public function onGamepadAxisMove (axis:GamepadAxis, value:Float):Void {
+        if ((axis == LEFT_X || axis == LEFT_Y) && value < Main.DEAD_ZONE) {
             bJustMoved = false;
             return;
         }
 
         if (bJustMoved) return;
 
-        if (event.x < -Main.DEAD_ZONE) {
-            bJustMoved = true;
-            beatLeft();
-        }
-        else if (event.x > Main.DEAD_ZONE) {
-            bJustMoved = true;
-            beatRight();
+        if (axis == LEFT_X) {
+            if (value < -Main.DEAD_ZONE) {
+                bJustMoved = true;
+                beatLeft();
+            }
+            else if (value > Main.DEAD_ZONE) {
+                bJustMoved = true;
+                beatRight();
+            }
         }
 
-        if (event.y < -Main.DEAD_ZONE) {
-            bJustMoved = true;
-            trackUp();
-        }
-        else if (event.y > Main.DEAD_ZONE) {
-            bJustMoved = true;
-            trackDown();
+        if (axis == LEFT_Y) {
+            if (value < -Main.DEAD_ZONE) {
+                bJustMoved = true;
+                trackUp();
+            }
+            else if (value > Main.DEAD_ZONE) {
+                bJustMoved = true;
+                trackDown();
+            }
         }
     }
 
-    private function onJoyButtonDown (event:JoystickEvent):Void {
-        trace('Joy button down ${event.id}');
-        if (event.id == Main.BUTTON_SELECT) {
+    public function onGamepadButtonDown (button:GamepadButton):Void {
+        trace('Gamepad button down ${button}');
+        if (button == GamepadButton.A) {
             sequences[15-joyTrack] ^= 1 << joyBeat;
             pt.x = Std.int(joyBeat * padWidth);
             pt.y = Std.int(joyTrack * padHeight);

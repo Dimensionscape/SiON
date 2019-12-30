@@ -249,9 +249,14 @@ class SoundLoaderFileData extends EventDispatcher
     {
         trace('SoundLoaderFileData.onComplete');
         _removeAllListeners();
-        _soundLoader._onProgress(this, Std.int(e.target.bytesLoaded - _bytesLoaded), Std.int(e.target.bytesTotal - _bytesTotal));
-        _bytesLoaded = e.target.bytesLoaded;
-        _bytesTotal = e.target.bytesTotal;
+        var slfd : SoundLoaderFileData = try cast(e.target, SoundLoaderFileData) catch(e:Dynamic) null;
+        if (slfd == null) {
+            trace('SoundLoaderFileData.onComplete: Incorrect event parameter');
+            return;
+        }
+        _soundLoader._onProgress(this, Std.int(slfd.bytesLoaded - _bytesLoaded), Std.int(slfd.bytesTotal - _bytesTotal));
+        _bytesLoaded = slfd.bytesLoaded;
+        _bytesTotal = slfd.bytesTotal;
         _postProcess();
     }
     
@@ -332,7 +337,7 @@ class SoundLoaderFileData extends EventDispatcher
         _fontLoader.addEventListener(IOErrorEvent.IO_ERROR, __errorCallback);
         trace('Calling loadbytes');
         var dataBytes = bitmap2bytes.fromBitmapData(bitmap);
-        var success = _fontLoader.loadBytes(dataBytes);
+        var success = _fontLoader.loadBytes(dataBytes.array);
         if (!success)
         {
             _soundLoader._onError(this, "Failed to convert the data");

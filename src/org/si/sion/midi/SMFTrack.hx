@@ -90,7 +90,7 @@ class SMFTrack
                 }
                 else {
                     if (eventType == -1)                         throw _errorIncorrectData();
-                    bytes.position--;
+                    bytes.position = bytes.position - 1;
                 }
                 
                 var _sw4_ = (eventType & 0xf0);                
