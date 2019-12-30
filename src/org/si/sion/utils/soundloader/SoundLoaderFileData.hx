@@ -249,14 +249,14 @@ class SoundLoaderFileData extends EventDispatcher
     {
         trace('SoundLoaderFileData.onComplete');
         _removeAllListeners();
-        var slfd : SoundLoaderFileData = try cast(e.target, SoundLoaderFileData) catch(e:Dynamic) null;
-        if (slfd == null) {
-            trace('SoundLoaderFileData.onComplete: Incorrect event parameter');
+        var li : LoaderInfo = try cast(e.target, LoaderInfo) catch(e:Dynamic) null;
+        if (li == null) {
+            trace('SoundLoaderFileData.onComplete: Incorrect event parameter: ${e.target}');
             return;
         }
-        _soundLoader._onProgress(this, Std.int(slfd.bytesLoaded - _bytesLoaded), Std.int(slfd.bytesTotal - _bytesTotal));
-        _bytesLoaded = slfd.bytesLoaded;
-        _bytesTotal = slfd.bytesTotal;
+        _soundLoader._onProgress(this, Std.int(li.bytesLoaded - _bytesLoaded), Std.int(li.bytesTotal - _bytesTotal));
+        _bytesLoaded = li.bytesLoaded;
+        _bytesTotal = li.bytesTotal;
         _postProcess();
     }
     
