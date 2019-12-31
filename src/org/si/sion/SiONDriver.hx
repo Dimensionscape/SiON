@@ -663,7 +663,7 @@ class SiONDriver extends Sprite implements ISiOPMWaveInterface
         _soundChannel = null;
 
         // register sound streaming function
-        _sound.addEventListener("sampleData", _streaming);
+        _sound.addEventListener(SampleDataEvent.SAMPLE_DATA, _streaming);
         
         // set mutex
         _mutex = this;
@@ -920,8 +920,13 @@ class SiONDriver extends Sprite implements ISiOPMWaveInterface
                 // start streaming
                 _suspendStreaming = true;
                 _soundChannel = _sound.play();
-                _soundChannel.soundTransform = _soundTransform;
-                _process_addAllEventListners();
+                if (_soundChannel == null) {
+                    trace('***** WARNING: Audio not started. SampleDataEvent may not be implemented. *****');
+                }
+                else {
+                    _soundChannel.soundTransform = _soundTransform;
+                    _process_addAllEventListners();
+                }
             }
         }
         catch (e : Error) {
@@ -1869,7 +1874,6 @@ class SiONDriver extends Sprite implements ISiOPMWaveInterface
             _startBackgroundSound();
         }
 
-        trace('Timer callback is $_timerCallback');
         // set timer interruption
         if (_timerCallback != null) {
             sequencer.setGlobalSequence(_timerSequence);  // set timer interruption
@@ -1938,7 +1942,7 @@ class SiONDriver extends Sprite implements ISiOPMWaveInterface
     private function _streaming(e : SampleDataEvent) : Void
     {
         var now = haxe.Timer.stamp();
-        //trace('Time since last: ${(now - time) * 1000} ms');
+        //trace('SiONDriver._streaming: Time since last: ${(now - time) * 1000} ms');
         time = now;
 
         if (e.data == null) {
